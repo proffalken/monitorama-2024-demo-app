@@ -3,10 +3,21 @@
 import os
 import sys
 
+from opentelemetry.instrumentation.django import DjangoInstrumentor
+from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
+from opentelemetry.instrumentation.logging import LoggingInstrumentor
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
+
 
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'basic_otel.settings')
+
+    Psycopg2Instrumentor().instrument(enable_commenter=True, commenter_options={})
+    LoggingInstrumentor().instrument(set_logging_format=True)
+    DjangoInstrumentor().instrument()
+    RequestsInstrumentor().instrument()
+
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

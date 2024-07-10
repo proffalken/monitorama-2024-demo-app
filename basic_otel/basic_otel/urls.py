@@ -21,5 +21,6 @@ from spacedir import views as spaceviews
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('space_data/', spaceviews.get_space_status)
+    path('space_data/', spaceviews.get_space_status),
+    path('space_json/', spaceviews.get_space_status_json)
 ]
