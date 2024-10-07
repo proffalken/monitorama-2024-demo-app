@@ -15,8 +15,8 @@ class Migration(migrations.Migration):
             name='Space',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField()),
-                ('api_uri', models.CharField()),
+                ('name', models.CharField(max_length=255)),
+                ('api_uri', models.CharField(max_length=255)),
             ],
         ),
     ]

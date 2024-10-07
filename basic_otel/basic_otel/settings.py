@@ -74,12 +74,14 @@ WSGI_APPLICATION = 'basic_otel.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+print(BASE_DIR)
+print(f"read_default_file: {BASE_DIR}/.my.cnf")
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "django.db.backends.mysql",
         "OPTIONS": {
-            "service": "backend_db",
-            "passfile": ".dbcreds",
+            "read_default_file": f"{BASE_DIR}/.my.cnf",
         },
     }
 }
