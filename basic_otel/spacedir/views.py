@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 
 from opentelemetry import trace
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 tracer = trace.get_tracer(__name__)
 
@@ -37,7 +38,20 @@ def get_space_status_json(request):
                 current_space_state = "YES"
             else:
                 current_space_state = "NO"
-            space_return_data.append({"name": space.name, "is_open": current_space_state})
+            with tracer.start_as_current_span("get_weather_from_remote", kind=trace.SpanKind.CLIENT) as span:
+                carrier = {}
+                TraceContextTextMapPropagator().inject(carrier)
+                header = {"traceparent": carrier["traceparent"]}
+                weather_data = requests.get(f"http://localhost:8889/weather/?lat={space_data['location']['lat']}&lng={space_data['location']['lon']}", headers=header).json()
+            space_return_data.append(
+                    {"name": space.name, 
+                     "is_open": current_space_state,
+                     "weather": {
+                         "temperature": weather_data['current']['temp_c'],
+                         "condition": weather_data['current']['condition']['text'],
+                         "humidity": weather_data['current']['humidity']
+                         }
+                    })
 
     results = {"data": space_return_data}
     return JsonResponse(results)
