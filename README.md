@@ -5,6 +5,6 @@
 5. Run the following: `cd basic_otel && ./manage.py createsuperuser`, then fill out the prompts
 6. Log in to [http://localhost:8898/admin](http://localhost:8898/admin) and add a couple of spaces based on the [SpaceAPI Directory](https://github.com/SpaceApi/directory/blob/master/directory.json)
 7. Run `./bin/launch_weather.sh`
-8. Run `cd goclient && OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4318" go run .`
+8. Run `./bin/launch_client.sh`
 
 You should start to see the traces and metrics flow through the platform and into Grafana Cloud App O11y. 
