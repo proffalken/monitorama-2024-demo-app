@@ -40,6 +40,10 @@ spec:
               value: {{ .Values.basicOtel.otelServiceName | quote }}
             - name: WEATHER_SERVICE_URL
               value: {{ default (printf "http://%s-space-weather:%v/weather/" (include "monitorama-demo.fullname" .) .Values.spaceWeather.service.port) .Values.basicOtel.weatherServiceUrl | quote }}
+            {{- if and .Values.ingress.enabled (gt (len .Values.ingress.hosts) 0) }}
+            - name: DJANGO_CSRF_TRUSTED_ORIGINS
+              value: {{ printf "https://%s" (index .Values.ingress.hosts 0).host | quote }}
+            {{- end }}
             {{- if .Values.cnpg.enabled }}
             - name: BASIC_OTEL_DB_ENGINE
               value: postgres
