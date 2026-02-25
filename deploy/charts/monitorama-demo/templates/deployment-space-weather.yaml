@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "monitorama-demo.fullname" . }}-space-weather
+  labels:
+    app.kubernetes.io/name: space-weather
+    {{- include "monitorama-demo.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.spaceWeather.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: space-weather
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: space-weather
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: space-weather
+          image: "{{ .Values.spaceWeather.image.repository }}:{{ .Values.spaceWeather.image.tag }}"
+          imagePullPolicy: {{ .Values.spaceWeather.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8889
+              protocol: TCP
+          env:
+            - name: DJANGO_SETTINGS_MODULE
+              value: space_weather.settings
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.global.otel.endpoint | quote }}
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: {{ .Values.global.otel.protocol | quote }}
+            - name: OTEL_SERVICE_NAME
+              value: {{ .Values.spaceWeather.otelServiceName | quote }}
+            - name: WEATHER_API_URL
+              value: {{ .Values.spaceWeather.weatherApiUrl | quote }}
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: {{ printf "deployment.environment.name=%s,service.namespace=%s,service.version=%s" .Values.global.otel.environment .Values.spaceWeather.serviceNamespace .Values.spaceWeather.serviceVersion | quote }}
+            {{- if .Values.spaceWeather.weatherApiKey }}
+            - name: WEATHER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "monitorama-demo.fullname" . }}-weather-api
+                  key: WEATHER_API_KEY
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /weather/?lat=51.804536&lng=-2.698146
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /weather/?lat=51.804536&lng=-2.698146
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.spaceWeather.resources | nindent 12 }}

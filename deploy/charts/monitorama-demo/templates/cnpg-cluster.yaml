@@ -1,0 +1,20 @@
+{{- if .Values.cnpg.enabled }}
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ include "monitorama-demo.cnpgClusterName" . }}
+  labels:
+    app.kubernetes.io/name: cnpg
+    {{- include "monitorama-demo.labels" . | nindent 4 }}
+spec:
+  instances: {{ .Values.cnpg.cluster.instances }}
+  imageName: {{ .Values.cnpg.cluster.imageName | quote }}
+  storage:
+    size: {{ .Values.cnpg.cluster.storage.size | quote }}
+  bootstrap:
+    initdb:
+      database: {{ .Values.cnpg.database.name | quote }}
+      owner: {{ .Values.cnpg.database.owner | quote }}
+      secret:
+        name: {{ include "monitorama-demo.cnpgAppSecretName" . }}
+{{- end }}

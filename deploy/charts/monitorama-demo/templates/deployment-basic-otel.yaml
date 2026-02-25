@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "monitorama-demo.fullname" . }}-basic-otel
+  labels:
+    app.kubernetes.io/name: basic-otel
+    {{- include "monitorama-demo.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.basicOtel.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: basic-otel
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: basic-otel
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: basic-otel
+          image: "{{ .Values.basicOtel.image.repository }}:{{ .Values.basicOtel.image.tag }}"
+          imagePullPolicy: {{ .Values.basicOtel.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8898
+              protocol: TCP
+          env:
+            - name: DJANGO_SETTINGS_MODULE
+              value: basic_otel.settings
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.global.otel.endpoint | quote }}
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: {{ .Values.global.otel.protocol | quote }}
+            - name: OTEL_SERVICE_NAME
+              value: {{ .Values.basicOtel.otelServiceName | quote }}
+            - name: WEATHER_SERVICE_URL
+              value: {{ default (printf "http://%s-space-weather:%v/weather/" (include "monitorama-demo.fullname" .) .Values.spaceWeather.service.port) .Values.basicOtel.weatherServiceUrl | quote }}
+            {{- if .Values.cnpg.enabled }}
+            - name: BASIC_OTEL_DB_ENGINE
+              value: postgres
+            - name: POSTGRES_HOST
+              value: {{ printf "%s-rw" (include "monitorama-demo.cnpgClusterName" .) | quote }}
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_DB
+              value: {{ .Values.cnpg.database.name | quote }}
+            - name: POSTGRES_USER
+              value: {{ .Values.cnpg.database.user | quote }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "monitorama-demo.cnpgAppSecretName" . }}
+                  key: password
+            {{- end }}
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: {{ printf "deployment.environment.name=%s,service.namespace=%s,service.version=%s" .Values.global.otel.environment .Values.basicOtel.serviceNamespace .Values.basicOtel.serviceVersion | quote }}
+          readinessProbe:
+            httpGet:
+              path: /space_json/
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /space_json/
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.basicOtel.resources | nindent 12 }}

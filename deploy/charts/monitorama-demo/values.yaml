@@ -1,0 +1,62 @@
+global:
+  imagePullSecrets: []
+  otel:
+    endpoint: http://otel-collector:4318
+    protocol: http/protobuf
+    environment: production
+
+cnpg:
+  enabled: false
+  cluster:
+    instances: 1
+    imageName: ghcr.io/cloudnative-pg/postgresql:16
+    storage:
+      size: 2Gi
+  database:
+    name: basic_otel
+    owner: basic_otel
+    user: basic_otel
+    password: change-me
+    existingSecret: ""
+
+basicOtel:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/REPLACE_ME/monitorama-2024-demo-app-basic-otel
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8898
+  resources: {}
+  weatherServiceUrl: ""
+  otelServiceName: space-api-lookup
+  serviceNamespace: otel_demos
+  serviceVersion: "1.1.0"
+
+spaceWeather:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/REPLACE_ME/monitorama-2024-demo-app-space-weather
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8889
+  resources: {}
+  weatherApiUrl: https://api.weatherapi.com/v1/current.json
+  weatherApiKey: ""
+  otelServiceName: space-weather
+  serviceNamespace: otel_demos
+  serviceVersion: "1.1.0"
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: basic-otel.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []

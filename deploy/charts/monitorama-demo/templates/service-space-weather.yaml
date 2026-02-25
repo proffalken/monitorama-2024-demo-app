@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "monitorama-demo.fullname" . }}-space-weather
+  labels:
+    app.kubernetes.io/name: space-weather
+    {{- include "monitorama-demo.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.spaceWeather.service.type }}
+  selector:
+    app.kubernetes.io/name: space-weather
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - name: http
+      protocol: TCP
+      port: {{ .Values.spaceWeather.service.port }}
+      targetPort: http

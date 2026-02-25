@@ -1,0 +1,6 @@
+apiVersion: v2
+name: monitorama-demo
+description: Deploy basic_otel and space_weather services
+version: 0.1.0
+appVersion: "1.1.0"
+type: application
